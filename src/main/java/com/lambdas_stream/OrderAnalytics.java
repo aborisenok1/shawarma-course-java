@@ -18,7 +18,9 @@ public class OrderAnalytics {
                 new OrderRow(5, "Bob", COMPLETED, CARD, 720),
                 new OrderRow(6, "Alice", CANCELLED, CARD, 820),
                 new OrderRow(7, "John", READY, CARD, 920),
-                new OrderRow(8, "Alice", PAID, CARD, 1020));
+                new OrderRow(8, "Alice", PAID, CARD, 1020),
+                new OrderRow(9, "Marian", CANCELLED, CASH, 1120),
+                new OrderRow(10, "Adam", READY, CRYPTO, 1220));
 
         // 1. Оплаченные заказы клиента
         List<OrderRow> paidOrders = paidByCustomer(orders, "Alice");
@@ -36,7 +38,24 @@ public class OrderAnalytics {
         System.out.println(countByStatus(orders));
         System.out.println();
 
+        //4. Выручка по способам оплаты
+        System.out.println("//4. Выручка по способам оплаты");
+        System.out.println(revenueByPayment(orders));
+        System.out.println();
 
+        //5. Пагинация
+        Page<OrderRow> pagination = page(orders, 2, 4);
+        System.out.println("//5. Пагинация: ");
+        System.out.println(pagination.getItems());
+        System.out.println();
+
+
+        OrderAnalytics.paidByCustomer(orders, "Alice")
+                .forEach(System.out::println);
+        System.out.println(OrderAnalytics.revenue(orders));
+        System.out.println(OrderAnalytics.countByStatus(orders));
+        System.out.println(OrderAnalytics.revenueByPayment(orders));
+        System.out.println(OrderAnalytics.page(orders, 2, 4));
     }
 
 
@@ -61,5 +80,20 @@ public class OrderAnalytics {
                 ));
     }
 
-}
+    static Map<PaymentChoice, Double> revenueByPayment(List<OrderRow> orders) {
+        return orders.stream()
+                .filter(order -> order.getStatus() != CANCELLED)
+                .collect(Collectors.groupingBy(
+                        order -> order.getPayment(),
+                        Collectors.summingDouble(order -> order.getTotal())
+                ));
+    }
 
+    static Page<OrderRow> page(List<OrderRow> orders, int pageNum, int pageSize) {
+        List<OrderRow> items = orders.stream()
+                .skip((long) (pageNum - 1) * pageSize)
+                .limit(pageSize)
+                .toList();
+        return new Page<>(items, pageNum, pageSize, orders.size());
+    }
+}
